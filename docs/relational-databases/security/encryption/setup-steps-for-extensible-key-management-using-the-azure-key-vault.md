@@ -12,8 +12,8 @@ helpviewer_keywords:
   - "SQL Server Connector, setup"
   - "SQL Server Connector"
 ms.assetid: c1f29c27-5168-48cb-b649-7029e4816906
-author: jaszymas
-ms.author: jaszymas
+author: jaszymas, arupp
+ms.author: jaszymas, arupp
 ---
 # SQL Server TDE Extensible Key Management Using Azure Key Vault - Setup Steps
 [!INCLUDE[appliesto-ss-xxxx-xxxx-xxx-md](../../../includes/appliesto-ss-xxxx-xxxx-xxx-md.md)]
@@ -46,17 +46,54 @@ SQL Server Version  |Redistributable Install Link
   
 2.  Register an application with Azure Active Directory. For detailed step-by-step instructions to register an application, see the **Get an identity for the application** section  of the [Azure Key Vault blog post](https://blogs.technet.microsoft.com/kv/2015/06/02/azure-key-vault-step-by-step/).  
   
-3.  Copy the **Client ID** and **Client Secret** for a later step, where they will be used to grant [!INCLUDE[ssNoVersion](../../../includes/ssnoversion-md.md)] access to your key vault.  
-  
- ![ekm-client-id](../../../relational-databases/security/encryption/media/ekm-client-id.png "ekm-client-id")  
-  
- ![ekm-key-id](../../../relational-databases/security/encryption/media/ekm-key-id.png "ekm-key-id")  
-  
-## Part II: Create a Key Vault and Key  
+3.  Copy the **App (Client) ID** and **Client Secret** for a later step, where they will be used to grant [!INCLUDE[ssNoVersion](../../../includes/ssnoversion-md.md)] access to your key vault.  
+ 
+ 4. Navigate to Azure Active Directory (AAD) in the Azure Portal
+ ![ekm-part1_image1](../../../relational-databases/security/encryption/media/ekm-part1_image1.png "ekm-part1_image1")  
+ 
+ 5. Register Application in Azure Active Directory
+ ![ekm-part1_image2](../../../relational-databases/security/encryption/media/ekm-part1_image2.png "ekm-part1_image2")  
+ 
+ 6. Add New Client Secret  
+ ![ekm-part1_image3](../../../relational-databases/security/encryption/media/ekm-part1_image3.png "ekm-part1_image3")  
+ 
+ 7. Click on the + New client secret button (expiration as appropriate) then "Add"
+ ![ekm-part1_image4](../../../relational-databases/security/encryption/media/ekm-part1_image4.png "ekm-part1_image4")  
+ 
+ 	8. Copy the "Value" of the Client Secret to be used to create an Asymmetric key in SQL Server.
+ ![ekm-part1_image5](../../../relational-databases/security/encryption/media/ekm-part1_image5.png "ekm-part1_image5")  
+ 
+## Part II: Create a Key Vault using the Azure Portal 
+The Azure Portal can be used to create the Key Vault and add an Azure Active Directory Principal to the Key Vault.
+
+1. **Create a new resource group**
+All Azure resources created via Azure Resource Manager must be contained in resource groups. Create a resource group to house your key vault. This example uses `ContosoDevRG`. Choose your own **unique** resource group and key vault name as all key vault names are globally unique.
+
+  A. Create a Resource Group
+![ekm-part2_image1](../../../relational-databases/security/encryption/media/ekm-part2_image1.png "ekm-part2_image1")  
+
+  B. Create the Key Vault
+![ekm-part2_image2](../../../relational-databases/security/encryption/media/ekm-part2_image2.png "ekm-part2_image2")  
+
+  C. Add Access Policy to Azure Active Directory Principal (Application)
+![ekm-part2_image3](../../../relational-databases/security/encryption/media/ekm-part2_image3.png "ekm-part2_image3")  
+
+  D. Access Policies: Get, List, Unwrap Key, Wrap Key
+![ekm-part2_image4](../../../relational-databases/security/encryption/media/ekm-part2_image4.png "ekm-part2_image4")
+
+  E. Add a Principal (Azure Active Directory Application) to the Key Vault
+ ![ekm-part2_image5](../../../relational-databases/security/encryption/media/ekm-part2_image5.png "ekm-part2_image5")  
+
+  F. Also Save the Changes to the Access Policies:
+![ekm-part2_image6](../../../relational-databases/security/encryption/media/ekm-part2_image6.png "ekm-part2_image6")  
+ 
+
+## Part II: Create a Key Vault and Key using PowerShell
  The key vault and key created here will be used by the SQL Server Database Engine for encryption key protection.  
   
 > [!IMPORTANT]  
 >  The subscription where the key vault is created must be in the same default Azure Active Directory where the Azure Active Directory service principal was created. If you want to use an Active Directory other than your default Active Directory for creating a service principal for the SQL Server Connector, you must change the default Active Directory in your Azure account before creating your key vault. To learn how to change the default Active Directory to the one you'd like to use, please refer to the SQL Server Connector [FAQs](../../../relational-databases/security/encryption/sql-server-connector-maintenance-troubleshooting.md#AppendixB).  
+  
   
 1.  **Open PowerShell and Sign in**  
   
@@ -103,10 +140,10 @@ SQL Server Version  |Redistributable Install Link
   
 3.  **Create a Key Vault**  
   
-     The `New-AzKeyVault` cmdlet requires a resource group name, a key vault name, and a geographic location. For example, for a key vault named `ContosoDevKeyVault`, type:  
+     The `New-AzKeyVault` cmdlet requires a resource group name, a key vault name, and a geographic location. For example, for a key vault named `ContosoEKMKeyVault`, type:  
   
     ```powershell  
-    New-AzKeyVault -VaultName 'ContosoDevKeyVault' `  
+    New-AzKeyVault -VaultName 'ContosoEKMKeyVault' `  
        -ResourceGroupName 'ContosoDevRG' -Location 'East Asia'  
     ```  
   
@@ -115,13 +152,13 @@ SQL Server Version  |Redistributable Install Link
      The statement returns:  
   
     ```  
-    Vault Name                       : ContosoDevKeyVault  
+    Vault Name                       : ContosoEKMKeyVault  
     Resource Group Name              : ContosoDevRG  
     Location                         : East Asia  
     ResourceId                       : /subscriptions/<subscription_id>/  
                                         resourceGroups/ContosoDevRG/providers/  
-                                        Microsoft/KeyVault/vaults/ContosoDevKeyVault  
-    Vault URI: https://ContosoDevKeyVault.vault.azure.net  
+                                        Microsoft/KeyVault/vaults/ContosoEKMKeyVault  
+    Vault URI: https://ContosoEKMKeyVault.vault.azure.net  
     Tenant ID                        : <tenant_id>  
     SKU                              : Standard  
     Enabled For Deployment?          : False  
@@ -144,14 +181,14 @@ SQL Server Version  |Redistributable Install Link
     In this case, let's use the Azure Active Directory service principal created in Part I to authorize the [!INCLUDE[ssNoVersion](../../../includes/ssnoversion-md.md)] instance.  
   
     > [!IMPORTANT]  
-    >  The Azure Active Directory service principal must have at least the `get`, `wrapKey`, and `unwrapKey` permissions for the key vault.  
+    >  The Azure Active Directory service principal must have at least the `get`, `list`,`wrapKey`, and `unwrapKey` permissions for the key vault.  
   
-     As shown below, use the **Client ID** from Part I for the `ServicePrincipalName` parameter. The `Set-AzKeyVaultAccessPolicy` runs silently with no output if it runs successfully.  
+     As shown below, use the **App (Client) ID** from Part I for the `ServicePrincipalName` parameter. The `Set-AzKeyVaultAccessPolicy` runs silently with no output if it runs successfully.  
   
     ```powershell  
-    Set-AzKeyVaultAccessPolicy -VaultName 'ContosoDevKeyVault'`  
-      -ServicePrincipalName EF5C8E09-4D2A-4A76-9998-D93440D8115D `  
-      -PermissionsToKeys get, wrapKey, unwrapKey  
+    Set-AzKeyVaultAccessPolicy -VaultName 'ContosoEKMKeyVault'`  
+      -ServicePrincipalName 9A57CBC5-4C4C-40E2-B517-EA677`  
+      -PermissionsToKeys get, list, wrapKey, unwrapKey  
     ```  
   
      Call the `Get-AzKeyVault` cmdlet to confirm the permissions. In the statement output under 'Access Policies,' you should see your AAD application name listed as another tenant that has access to this key vault.  
@@ -162,7 +199,7 @@ SQL Server Version  |Redistributable Install Link
      There are two ways to generate a key in Azure Key Vault: 1) Import an existing key or 2) create a new key.  
                   
       > [!NOTE]
-        >  SQL Server only supports 2048-bit RSA keys.
+      >  SQL Server only supports 2048-bit RSA keys.
         
     ### Best Practice:
     
@@ -212,7 +249,7 @@ SQL Server Version  |Redistributable Install Link
     Alternatively, you can create a new encryption key directly in Azure Key vault and have it be either software-protected or HSM-protected.  In this example, let's create a software-protected key using the `Add-AzureKeyVaultKey cmdlet`:  
 
     ``` powershell  
-    Add-AzureKeyVaultKey -VaultName 'ContosoDevKeyVault' `  
+    Add-AzureKeyVaultKey -VaultName 'ContosoEKMKeyVault' `  
       -Name 'ContosoRSAKey0' -Destination 'Software'  
     ```  
   
@@ -220,12 +257,12 @@ SQL Server Version  |Redistributable Install Link
   
     ```  
     Attributes : Microsoft.Azure.Commands.KeyVault.Models.KeyAttributes  
-    Key        :  {"kid":"https:contosodevKeyVault.azure.net/keys/  
+    Key        :  {"kid":"https:contosoekmkeyvault.azure.net/keys/  
                    ContosoRSAKey0/<guid>","dty":"RSA:,"key_ops": ...  
     VaultName  : contosodevkeyvault  
     Name       : contosoRSAKey0  
     Version    : <guid>  
-    Id         : https://contosodevkeyvault.vault.azure.net:443/  
+    Id         : https://contosoekmkeyvault.vault.azure.net:443/  
                  keys/ContosoRSAKey0/<guid>  
     ```  
  > [!IMPORTANT]  
@@ -284,10 +321,10 @@ SQL Server Version  |Redistributable Install Link
 3.  **Register (create) the [!INCLUDE[ssNoVersion](../../../includes/ssnoversion-md.md)] Connector as an EKM provider with [!INCLUDE[ssNoVersion](../../../includes/ssnoversion-md.md)]**  
   
      -- Create a cryptographic provider, using the [!INCLUDE[ssNoVersion](../../../includes/ssnoversion-md.md)] Connector, which is an EKM provider for the Azure Key Vault.    
-    This example uses the name `AzureKeyVault_EKM_Prov`.  
+    This example uses the name `AzureKeyVault_EKM`.  
   
     ```sql  
-    CREATE CRYPTOGRAPHIC PROVIDER AzureKeyVault_EKM_Prov   
+    CREATE CRYPTOGRAPHIC PROVIDER AzureKeyVault_EKM   
     FROM FILE = 'C:\Program Files\SQL Server Connector for Microsoft Azure Key Vault\Microsoft.AzureKeyVaultService.EKM.dll';  
     GO  
     ```  
@@ -308,25 +345,26 @@ SQL Server Version  |Redistributable Install Link
   
      Modify the [!INCLUDE[tsql](../../../includes/tsql-md.md)] script below in the following ways:  
   
-    -   Edit the `IDENTITY` argument (`ContosoDevKeyVault`) to point to your Azure Key Vault.
+    -   Edit the `IDENTITY` argument (`ContosoEKMKeyVault`) to point to your Azure Key Vault.
         - If you're using **global Azure**, replace the `IDENTITY` argument with the name of your Azure Key Vault from Part II.
         - If you're using a **private Azure cloud** (ex. Azure Government, Azure China, or Azure Germany), replace the `IDENTITY` argument with the Vault URI that is returned in Part II, step 3. Do not include "https://" in the Vault URI.   
-    -   Replace the first part of the `SECRET` argument with the Azure Active Directory **Client ID** from Part I. In this example, the **Client ID** is `EF5C8E094D2A4A769998D93440D8115D`.  
+    -   Replace the first part of the `SECRET` argument with the Azure Active Directory **Client ID** from Part I. In this example, the **Client ID** is `9A57CBC54C4C40E2B517EA677E0EFA00`.  
   
         > [!IMPORTANT]  
-        >  You must remove the hyphens from the **Client ID**.  
+        >  You **must** remove the hyphens from the **App (Client) ID**.  
   
-    -   Complete the second part of the `SECRET` argument with **Client Secret** from Part I.  In this example the **Client Secret** from Part 1 is `Replace-With-AAD-Client-Secret`. The final string for the `SECRET` argument will be a long sequence of letters and numbers, with *no hyphens*.  
+    -   Complete the second part of the `SECRET` argument with **Client Secret** from Part I.  In this example the **Client Secret** from Part 1 is `08:k?[:XEZFxcwIPvVVZhTjHWXm7w1?m`. The final string for the `SECRET` argument will be a long sequence of letters and numbers, with *no hyphens*.  
   
     ```sql  
     USE master;  
     CREATE CREDENTIAL sysadmin_ekm_cred   
-        WITH IDENTITY = 'ContosoDevKeyVault', -- for public Azure
-        -- WITH IDENTITY = 'ContosoDevKeyVault.vault.usgovcloudapi.net', -- for Azure Government
-        -- WITH IDENTITY = 'ContosoDevKeyVault.vault.azure.cn', -- for Azure China
-        -- WITH IDENTITY = 'ContosoDevKeyVault.vault.microsoftazure.de', -- for Azure Germany   
-        SECRET = 'EF5C8E094D2A4A769998D93440D8115DReplace-With-AAD-Client-Secret'   
-    FOR CRYPTOGRAPHIC PROVIDER AzureKeyVault_EKM_Prov;  
+        WITH IDENTITY = 'ContosoEKMKeyVault',                            -- for public Azure
+        -- WITH IDENTITY = 'ContosoEKMKeyVault.vault.usgovcloudapi.net', -- for Azure Government
+        -- WITH IDENTITY = 'ContosoEKMKeyVault.vault.azure.cn',          -- for Azure China
+        -- WITH IDENTITY = 'ContosoEKMKeyVault.vault.microsoftazure.de', -- for Azure Germany
+               --<----Application (Client) ID ---><--AAD App (Client) ID Secret-->
+        SECRET = '9A57CBC54C4C40E2B517EA677E0EFA0008:k?[:XEZFxcwIPvVVZhTjHWXm7w1?m'   
+    FOR CRYPTOGRAPHIC PROVIDER AzureKeyVault_EKM;  
   
     -- Add the credential to the SQL Server administrator's domain login   
     ALTER LOGIN [<domain>\<login>]  
@@ -344,11 +382,84 @@ SQL Server Version  |Redistributable Install Link
     -   Replace `ContosoRSAKey0` with the name of your key in Azure Key Vault.  
   
     ```sql  
-    CREATE ASYMMETRIC KEY CONTOSO_KEY   
-    FROM PROVIDER [AzureKeyVault_EKM_Prov]  
+    CREATE ASYMMETRIC KEY EKMSampleASYKey   
+    FROM PROVIDER [AzureKeyVault_EKM]  
     WITH PROVIDER_KEY_NAME = 'ContosoRSAKey0',  
     CREATION_DISPOSITION = OPEN_EXISTING;  
     ```  
+    
+ 6. **Create a new Login from ASYEMMETRIC KEY in SQL Server**
+ The new login can now be created using the asymmetric key creates in previous step.
+     ```sql  
+    --Create a Login that will associate the asymmetric key to this login
+    CREATE LOGIN TDE_Login
+    FROM ASYMMETRIC KEY EKMSampleASYKey;
+    ```  
+
+ 7. **Create a new Login from ASYEMMETRIC KEY in SQL Server**
+ Drop the credential mapping from step 4 so the credential can be mapped to the new login.
+     ```sql  
+    --Now drop the credential mapping from the original association
+    ALTER LOGIN [<domain>\<login>]
+    DROP CREDENTIAL sysadmin_ekm_cred;
+    ``` 
+    
+ 8. **Alter the new Login**
+ Alter the new Login and map the EKM credential to the new login.
+     ```sql  
+    --Now drop the credential mapping from the original association
+    ALTER LOGIN TDE_Login
+    ADD CREDENTIAL sysadmin_ekm_cred;
+    ```  
+ 
+  9. **Create Test Database**
+ Create a test database that will be encrypted with the Azure Key Vault (Key).
+     ```sql  
+    --Create a test database that will be encrypted with the Azure Key Vault (Key)
+    CREATE DATABASE TestTDE
+    ```  
+
+  10. **Create a database encryption Key**
+ Create an ENCRYPTION KEY using the ASYMENTRIC KEY (EKMSampleASYKey)
+     ```sql  
+    --Create an ENCRYPTION KEY using the ASYMENTRIC KEY (EKMSampleASYKey)
+    CREATE DATABASE ENCRYPTION KEY   
+    WITH ALGORITHM = AES_256   
+    ```  
+  
+  11. **Encrypt the test database **
+ Enable TDE by setting ENCRYPTION ON
+     ```sql  
+    --Enable TDE by setting ENCRYPTION ON
+    ALTER DATABASE TestTDE   
+    SET ENCRYPTION ON;  
+    ```  
+    
+  12. **Cleanup test objects **
+ Enable TDE by setting ENCRYPTION ON
+     ```sql  
+    -- CLEAN UP
+    USE Master
+    ALTER DATABASE [TestTDE] SET  SINGLE_USER WITH ROLLBACK IMMEDIATE
+    DROP DATABASE [TestTDE]
+
+    ALTER LOGIN [TDE_Login] DROP CREDENTIAL [sysadmin_ekm_cred]
+    DROP LOGIN [TDE_Login]
+
+    DROP CREDENTIAL [sysadmin_ekm_cred]  
+    USE MASTER
+    DROP ASYMMETRIC KEY [EKMSampleASYKey]
+    DROP CRYPTOGRAPHIC PROVIDER [AzureKeyVault_EKM]
+    ```  
+    
+**Sample Scripts **
+1. Sample PowerShell script to setup Azure Key Vault
+[PowerShell EKM Sample Script](../../../relational-databases/security/encryption/media/ekm_ps1.txt) 
+
+2. Enable TDE on SQL Server Using EKM
+[TSQL EKM Sample Script](../../../relational-databases/security/encryption/media/ekm_setup_tsql.sql) 
+
+
 ## Next Step  
   
 Now that you have completed the basic configuration, see how to [Use SQL Server Connector with SQL Encryption Features](../../../relational-databases/security/encryption/use-sql-server-connector-with-sql-encryption-features.md)   
