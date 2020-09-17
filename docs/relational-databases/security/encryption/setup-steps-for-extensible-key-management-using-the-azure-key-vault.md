@@ -2,7 +2,7 @@
 title: "Set up Transparent Data Encryption (TDE) Extensible Key Management with Azure Key Vault"
 description: Install and configure the SQL Server Connector for Azure Key Vault. 
 ms.custom: seo-lt-2019
-ms.date: "08/12/2020"
+ms.date: "09/17/2020"
 ms.prod: sql
 ms.reviewer: vanto
 ms.technology: security
@@ -333,8 +333,8 @@ Download the SQL Server Connector from the [Microsoft Download Center](https://g
 > - SQL Server Connector versions 1.0.0.440 and older have been replaced and are no longer supported in production environments and using the instructions on the [SQL Server Connector Maintenance & Troubleshooting](../../../relational-databases/security/encryption/sql-server-connector-maintenance-troubleshooting.md) page under [Upgrade of SQL Server Connector](sql-server-connector-maintenance-troubleshooting.md#upgrade-of--connector).
 > - Starting with version 1.0.3.0, the SQL Server Connector reports relevant error messages to the Windows event logs for troubleshooting.
 > - Starting with version 1.0.4.0, there is support for private Azure clouds, including Azure China, Azure Germany, and Azure Government.
-> - There is a breaking change in version 1.0.5.0 in terms of the thumbprint algorithm. You may experience database restore failures after upgrading to 1.0.5.0. For more information, refer to [KB article 447099](https://support.microsoft.com/help/4470999/db-backup-problems-to-sql-server-connector-for-azure-1-0-5-0).
-> - **Starting with version 1.0.7.0, the SQL Server Connector supports filtering messages and network request retry logic.**
+> - There is a breaking change in version 1.0.5.0 (with a date of January, 2018) in terms of the thumbprint algorithm. You may experience database restore failures after upgrading to 1.0.5.0. For more information, refer to [KB article 447099](https://support.microsoft.com/help/4470999/db-backup-problems-to-sql-server-connector-for-azure-1-0-5-0).
+> - **Starting with version 1.0.5.0 (with a date of September, 2020), the SQL Server Connector supports filtering messages and network request retry logic.**
   
   ![Screenshot of the SQL Server Connector installation wizard](../../../relational-databases/security/encryption/media/ekm/ekm-connector-install.png)  
   
